@@ -153,9 +153,20 @@ const Dashboard = () => {
             </Card>
           ) : (
             <div className="space-y-4">
-              {myBids
-                .filter((bid) => bid.gigId) // Filter out bids where gig was deleted
-                .map((bid, index) => (
+              {myBids.map((bid, index) => {
+                  // Handle both populated object and ObjectId string cases
+                  const gigId = typeof bid.gigId === 'string' 
+                    ? bid.gigId 
+                    : bid.gigId?._id || bid.gigId;
+                  const gigTitle = bid.gigId?.title || 'Untitled Gig';
+                  const gigBudget = bid.gigId?.budget;
+                  
+                  // Skip rendering if gig was deleted (gigId is null/undefined)
+                  if (!gigId && !bid.gigId) {
+                    return null;
+                  }
+                  
+                  return (
                   <motion.div
                     key={bid._id}
                     initial={{ opacity: 0, y: 20 }}
@@ -165,19 +176,19 @@ const Dashboard = () => {
                     <Card>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
-                          {bid.gigId?._id ? (
-                            <Link to={`/gigs/${bid.gigId._id}`}>
+                          {gigId ? (
+                            <Link to={`/gigs/${gigId}`}>
                               <h3 className="text-xl font-semibold text-gray-100 hover:text-accent-teal transition-colors mb-2">
-                                {bid.gigId.title || 'Untitled Gig'}
+                                {gigTitle}
                               </h3>
                             </Link>
                           ) : (
                             <h3 className="text-xl font-semibold text-gray-100 mb-2">
-                              {bid.gigId?.title || 'Gig Deleted'}
+                              Gig Deleted
                             </h3>
                           )}
-                          {bid.gigId?.budget && (
-                            <p className="text-gray-400 text-sm mb-2">Budget: ${bid.gigId.budget}</p>
+                          {gigBudget && (
+                            <p className="text-gray-400 text-sm mb-2">Budget: ${gigBudget}</p>
                           )}
                         </div>
                         <div className="text-right">
@@ -198,8 +209,8 @@ const Dashboard = () => {
 
                       <p className="text-gray-300 mb-4">{bid.message}</p>
 
-                      {bid.gigId?._id && (
-                        <Link to={`/gigs/${bid.gigId._id}`}>
+                      {gigId && (
+                        <Link to={`/gigs/${gigId}`}>
                           <Button variant="outline" size="sm">
                             View Gig
                           </Button>
@@ -207,7 +218,8 @@ const Dashboard = () => {
                       )}
                     </Card>
                   </motion.div>
-                ))}
+                  );
+                })}
             </div>
           )}
         </div>
