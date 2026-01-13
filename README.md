@@ -54,7 +54,7 @@ npm install
 Create a `.env` file in the `backend` directory:
 
 ```env
-MONGODB_URI=mongodb+srv://npoornimaharshini2003_db_user:Harshini2410@serverhive.azoygst.mongodb.net/gigflow?retryWrites=true&w=majority&appName=ServerHive
+MONGODB_URI=mongodb+srv://<username>:<password>@serverhive.azoygst.mongodb.net/gigflow?retryWrites=true&w=majority&appName=ServerHive
 JWT_SECRET=your_super_secret_jwt_key_here_minimum_32_characters_long
 PORT=5000
 FRONTEND_URL=http://localhost:5173
