@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../utils/api.js';
+import { logoutUser } from './authSlice.js';
 
 export const fetchGigs = createAsyncThunk(
   'gigs/fetchGigs',
@@ -65,6 +66,12 @@ const gigSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    // Clear user-specific data on logout
+    clearUserData: (state) => {
+      state.myGigs = [];
+      state.gigs = [];
+      state.currentGig = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -98,9 +105,15 @@ const gigSlice = createSlice({
       })
       .addCase(fetchMyGigs.fulfilled, (state, action) => {
         state.myGigs = action.payload;
+      })
+      // Clear user data when user logs out
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.myGigs = [];
+        state.gigs = [];
+        state.currentGig = null;
       });
   },
 });
 
-export const { clearCurrentGig, clearError } = gigSlice.actions;
+export const { clearCurrentGig, clearError, clearUserData } = gigSlice.actions;
 export default gigSlice.reducer;

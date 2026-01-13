@@ -15,13 +15,17 @@ const Dashboard = () => {
   const { myGigs, isLoading: gigsLoading } = useSelector((state) => state.gigs);
   const { myBids, isLoading: bidsLoading } = useSelector((state) => state.bids);
   const { notifications } = useSelector((state) => state.notifications);
+  const { user } = useSelector((state) => state.auth); // Get current user
 
   const [activeTab, setActiveTab] = useState('gigs');
 
+  // Refetch data when user changes (important for account switching)
   useEffect(() => {
-    dispatch(fetchMyGigs());
-    dispatch(fetchMyBids());
-  }, [dispatch]);
+    if (user?._id) {
+      dispatch(fetchMyGigs());
+      dispatch(fetchMyBids());
+    }
+  }, [dispatch, user?._id]); // Refetch when user ID changes
 
   const tabs = [
     { id: 'gigs', label: 'My Gigs', count: myGigs.length },

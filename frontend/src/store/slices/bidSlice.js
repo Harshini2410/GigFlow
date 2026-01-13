@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../utils/api.js';
+import { logoutUser } from './authSlice.js';
 
 export const createBid = createAsyncThunk(
   'bids/createBid',
@@ -64,6 +65,11 @@ const bidSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    // Clear user-specific data on logout
+    clearUserData: (state) => {
+      state.myBids = [];
+      state.bids = [];
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -100,9 +106,14 @@ const bidSlice = createSlice({
         if (index !== -1) {
           state.bids[index] = action.payload.bid;
         }
+      })
+      // Clear user data when user logs out
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.myBids = [];
+        state.bids = [];
       });
   },
 });
 
-export const { clearBids, clearError } = bidSlice.actions;
+export const { clearBids, clearError, clearUserData } = bidSlice.actions;
 export default bidSlice.reducer;

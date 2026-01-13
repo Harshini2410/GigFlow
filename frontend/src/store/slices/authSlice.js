@@ -98,6 +98,7 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
+        state.isInitialized = false; // Reset initialization state
         state.error = null;
       })
       // Get current user (auth rehydration)
