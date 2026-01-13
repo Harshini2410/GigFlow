@@ -54,6 +54,7 @@ const authSlice = createSlice({
     user: null,
     isLoading: false,
     isAuthenticated: false,
+    isInitialized: false, // Track if auth check has completed
     error: null,
   },
   reducers: {
@@ -99,19 +100,26 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.error = null;
       })
-      // Get current user
+      // Get current user (auth rehydration)
       .addCase(getCurrentUser.pending, (state) => {
         state.isLoading = true;
+        // Don't set isAuthenticated to false yet - wait for response
       })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.isInitialized = true; // Auth check completed
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.error = null;
       })
       .addCase(getCurrentUser.rejected, (state) => {
         state.isLoading = false;
+        state.isInitialized = true; // Auth check completed (even if failed)
         state.isAuthenticated = false;
         state.user = null;
+        // Don't set error for 401 - it's expected when not logged in
+        // Only set error for actual failures (network errors, etc.)
+        state.error = null;
       });
   },
 });
