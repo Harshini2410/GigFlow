@@ -1,8 +1,8 @@
 services:
-  - type: web
+  - type: static
     name: gigflow-frontend
-    env: static
-    staticPublishPath: ./frontend/dist
+    buildCommand: cd frontend && npm install && npm run build
+    publishPath: ./frontend/dist
     headers:
       - path: /*
         name: X-Robots-Tag
