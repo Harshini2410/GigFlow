@@ -99,8 +99,12 @@ export const login = async (req, res, next) => {
 // @access  Private
 export const logout = async (req, res, next) => {
   try {
+    // Clear cookie by setting it to empty with immediate expiration
+    // Must match sameSite and secure settings from login/register
     res.cookie('token', '', {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
       expires: new Date(0),
     });
     res.json({ message: 'Logged out successfully' });

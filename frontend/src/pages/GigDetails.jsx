@@ -28,8 +28,17 @@ const GigDetails = () => {
     price: '',
   });
 
-  const isOwner = currentGig && user && currentGig.ownerId._id === user._id;
+  // Authorization: Compare logged-in user ID with gig.ownerId
+  // ALWAYS derive permissions from fresh backend data (currentGig)
+  // NEVER rely on cached or stale Redux data
+  // Gig owner CANNOT bid, Non-owners CAN bid
+  // Gig owner CAN view bids, Non-owners CANNOT view bids
+  const isOwner = currentGig && user && currentGig.ownerId?._id === user._id;
+  const canBid = isAuthenticated && !isOwner && currentGig?.status === 'open';
+  const canViewBids = isOwner;
 
+  // Fetch fresh gig data on mount (ensures we have latest backend state)
+  // This prevents stale cached data from showing wrong permissions
   useEffect(() => {
     dispatch(fetchGig(id));
 
@@ -39,11 +48,13 @@ const GigDetails = () => {
     };
   }, [id, dispatch]);
 
+  // Fetch bids when owner wants to view them
+  // Only fetch if user is owner (authorization check)
   useEffect(() => {
-    if (isOwner && showBids) {
+    if (canViewBids && showBids) {
       dispatch(fetchBidsByGig(id));
     }
-  }, [isOwner, showBids, id, dispatch]);
+  }, [canViewBids, showBids, id, dispatch]);
 
   const handleBidSubmit = async (e) => {
     e.preventDefault();
@@ -145,12 +156,14 @@ const GigDetails = () => {
 
           {isAuthenticated && (
             <div className="mt-6 flex gap-4">
-              {!isOwner && currentGig.status === 'open' && (
+              {/* Only show "Submit Bid" if user is NOT owner and gig is open */}
+              {canBid && (
                 <Button variant="primary" onClick={() => setShowBidModal(true)}>
                   Submit Bid
                 </Button>
               )}
-              {isOwner && (
+              {/* Only show "View Bids" if user IS owner */}
+              {canViewBids && (
                 <Button variant="secondary" onClick={() => setShowBids(!showBids)}>
                   {showBids ? 'Hide Bids' : 'View Bids'}
                 </Button>
@@ -159,7 +172,8 @@ const GigDetails = () => {
           )}
         </Card>
 
-        {isOwner && showBids && (
+        {/* Only show bids section if user is owner */}
+        {canViewBids && showBids && (
           <Card>
             <h2 className="text-2xl font-bold text-gray-100 mb-6">Bids ({bids.length})</h2>
 

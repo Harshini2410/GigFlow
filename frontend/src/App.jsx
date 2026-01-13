@@ -18,12 +18,12 @@ import Dashboard from './pages/Dashboard';
 
 function App() {
   const dispatch = useDispatch();
-  const { user, isAuthenticated, isInitialized } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
 
+  // On app startup: loadUser() MUST be called to restore auth from HttpOnly cookie
+  // This runs on every page refresh to restore auth state
+  // A 401 response is expected if no valid cookie exists - this is normal
   useEffect(() => {
-    // Check if user is authenticated on mount (auth rehydration)
-    // This runs on every page refresh to restore auth state from HttpOnly cookie
-    // A 401 response is expected if no valid cookie exists - this is normal
     dispatch(getCurrentUser());
   }, [dispatch]);
 
