@@ -153,49 +153,61 @@ const Dashboard = () => {
             </Card>
           ) : (
             <div className="space-y-4">
-              {myBids.map((bid, index) => (
-                <motion.div
-                  key={bid._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
-                  <Card>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
+              {myBids
+                .filter((bid) => bid.gigId) // Filter out bids where gig was deleted
+                .map((bid, index) => (
+                  <motion.div
+                    key={bid._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
+                    <Card>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          {bid.gigId?._id ? (
+                            <Link to={`/gigs/${bid.gigId._id}`}>
+                              <h3 className="text-xl font-semibold text-gray-100 hover:text-accent-teal transition-colors mb-2">
+                                {bid.gigId.title || 'Untitled Gig'}
+                              </h3>
+                            </Link>
+                          ) : (
+                            <h3 className="text-xl font-semibold text-gray-100 mb-2">
+                              {bid.gigId?.title || 'Gig Deleted'}
+                            </h3>
+                          )}
+                          {bid.gigId?.budget && (
+                            <p className="text-gray-400 text-sm mb-2">Budget: ${bid.gigId.budget}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-accent-teal mb-2">${bid.price}</p>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              bid.status === 'hired'
+                                ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                                : bid.status === 'rejected'
+                                ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                                : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'
+                            }`}
+                          >
+                            {bid.status.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-gray-300 mb-4">{bid.message}</p>
+
+                      {bid.gigId?._id && (
                         <Link to={`/gigs/${bid.gigId._id}`}>
-                          <h3 className="text-xl font-semibold text-gray-100 hover:text-accent-teal transition-colors mb-2">
-                            {bid.gigId.title}
-                          </h3>
+                          <Button variant="outline" size="sm">
+                            View Gig
+                          </Button>
                         </Link>
-                        <p className="text-gray-400 text-sm mb-2">Budget: ${bid.gigId.budget}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-accent-teal mb-2">${bid.price}</p>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            bid.status === 'hired'
-                              ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                              : bid.status === 'rejected'
-                              ? 'bg-red-500/20 text-red-400 border border-red-500/50'
-                              : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'
-                          }`}
-                        >
-                          {bid.status.toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-gray-300 mb-4">{bid.message}</p>
-
-                    <Link to={`/gigs/${bid.gigId._id}`}>
-                      <Button variant="outline" size="sm">
-                        View Gig
-                      </Button>
-                    </Link>
-                  </Card>
-                </motion.div>
-              ))}
+                      )}
+                    </Card>
+                  </motion.div>
+                ))}
             </div>
           )}
         </div>
