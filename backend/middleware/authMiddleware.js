@@ -1,8 +1,11 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+// Auth middleware - reads JWT ONLY from HttpOnly cookies
+// Does NOT expect Authorization headers (cookie-based auth only)
 export const protect = async (req, res, next) => {
   try {
+    // Read token from HttpOnly cookie (not from Authorization header)
     const token = req.cookies.token;
 
     if (!token) {

@@ -23,12 +23,14 @@ const io = new Server(httpServer, {
 });
 
 // Middleware
+// CORS configuration MUST come before routes and MUST include credentials: true
+// This allows cookies to be sent cross-origin (required for Render deployment)
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
+  credentials: true, // CRITICAL: Must be true for cookie-based auth
 }));
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser()); // Required to parse HttpOnly cookies
 
 // Socket.io connection handling
 io.on('connection', (socket) => {

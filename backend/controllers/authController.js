@@ -25,14 +25,15 @@ export const register = async (req, res, next) => {
     // Generate token
     const token = generateToken(user._id);
 
-    // Set HttpOnly cookie
-    // Use 'none' for cross-site cookies in production (frontend and backend on different domains)
-    // 'strict' is fine for localhost development
+    // Set HttpOnly cookie for cross-site authentication
+    // sameSite: 'none' is REQUIRED when frontend and backend are on different domains (Render)
+    // secure: true is REQUIRED when sameSite is 'none' (browser requirement)
+    // Note: For localhost development, you may need to use 'lax' instead of 'none'
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      sameSite: 'none', // Always 'none' for cross-site cookies (required for Render)
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     res.status(201).json({
@@ -72,14 +73,15 @@ export const login = async (req, res, next) => {
     // Generate token
     const token = generateToken(user._id);
 
-    // Set HttpOnly cookie
-    // Use 'none' for cross-site cookies in production (frontend and backend on different domains)
-    // 'strict' is fine for localhost development
+    // Set HttpOnly cookie for cross-site authentication
+    // sameSite: 'none' is REQUIRED when frontend and backend are on different domains (Render)
+    // secure: true is REQUIRED when sameSite is 'none' (browser requirement)
+    // Note: For localhost development, you may need to use 'lax' instead of 'none'
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      sameSite: 'none', // Always 'none' for cross-site cookies (required for Render)
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     res.json({

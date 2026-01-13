@@ -52,9 +52,9 @@ const authSlice = createSlice({
   name: 'auth',
   initialState: {
     user: null,
-    isLoading: false,
+    isLoading: false, // Loading state for auth operations
     isAuthenticated: false,
-    isInitialized: false, // Track if auth check has completed
+    isInitialized: false, // Track if initial auth check has completed (prevents premature redirects)
     error: null,
   },
   reducers: {
