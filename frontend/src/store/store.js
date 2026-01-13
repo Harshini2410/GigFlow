@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice.js';
 import gigReducer from './slices/gigSlice.js';
 import bidReducer from './slices/bidSlice.js';
 import notificationReducer from './slices/notificationSlice.js';
+import messageReducer from './slices/messageSlice.js';
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
     gigs: gigReducer,
     bids: bidReducer,
     notifications: notificationReducer,
+    messages: messageReducer,
   },
 });

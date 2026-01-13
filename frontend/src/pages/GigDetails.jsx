@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { HiXCircle, HiInbox } from 'react-icons/hi';
+import { HiXCircle, HiInbox, HiChat } from 'react-icons/hi';
 import { fetchGig, clearCurrentGig } from '../store/slices/gigSlice';
 import { fetchBidsByGig, createBid, hireFreelancer, clearBids, clearError } from '../store/slices/bidSlice';
+import { clearMessages } from '../store/slices/messageSlice';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import Input from '../components/Input';
 import Loading from '../components/Loading';
 import EmptyState from '../components/EmptyState';
+import Chat from '../components/Chat';
 
 const GigDetails = () => {
   const { id } = useParams();
@@ -19,10 +21,11 @@ const GigDetails = () => {
 
   const { currentGig, isLoading: gigLoading } = useSelector((state) => state.gigs);
   const { bids, isLoading: bidsLoading, error: bidError } = useSelector((state) => state.bids);
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isAuthenticated, authLoading } = useSelector((state) => state.auth);
 
   const [showBidModal, setShowBidModal] = useState(false);
   const [showBids, setShowBids] = useState(false);
+  const [activeTab, setActiveTab] = useState('details'); // 'details', 'bids', 'messages'
   const [bidData, setBidData] = useState({
     message: '',
     price: '',
@@ -37,6 +40,16 @@ const GigDetails = () => {
   const canBid = isAuthenticated && !isOwner && currentGig?.status === 'open';
   const canViewBids = isOwner;
 
+  // Check if user is the hired freelancer
+  const hiredBid = bids.find((bid) => bid.status === 'hired');
+  const isHiredFreelancer = hiredBid && user && hiredBid.freelancerId._id === user._id;
+
+  // Chat access: Only if gig is assigned AND (user is owner OR user is hired freelancer)
+  const canAccessChat =
+    isAuthenticated &&
+    currentGig?.status === 'assigned' &&
+    (isOwner || isHiredFreelancer);
+
   // Fetch fresh gig data on mount (ensures we have latest backend state)
   // This prevents stale cached data from showing wrong permissions
   useEffect(() => {
@@ -45,16 +58,17 @@ const GigDetails = () => {
     return () => {
       dispatch(clearCurrentGig());
       dispatch(clearBids());
+      dispatch(clearMessages(id));
     };
   }, [id, dispatch]);
 
-  // Fetch bids when owner wants to view them
-  // Only fetch if user is owner (authorization check)
+  // Fetch bids when owner wants to view them OR when checking for hired freelancer
+  // Fetch if user is owner (to view all bids) OR if gig is assigned (to check hired freelancer)
   useEffect(() => {
-    if (canViewBids && showBids) {
+    if ((canViewBids && showBids) || (currentGig?.status === 'assigned' && isAuthenticated)) {
       dispatch(fetchBidsByGig(id));
     }
-  }, [canViewBids, showBids, id, dispatch]);
+  }, [canViewBids, showBids, currentGig?.status, isAuthenticated, id, dispatch]);
 
   const handleBidSubmit = async (e) => {
     e.preventDefault();
@@ -100,7 +114,8 @@ const GigDetails = () => {
     }
   };
 
-  if (gigLoading) {
+  // Render loader while auth is loading to prevent UI flicker or incorrect permissions
+  if (authLoading || gigLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="flex justify-center py-20">
@@ -171,6 +186,112 @@ const GigDetails = () => {
             </div>
           )}
         </Card>
+
+        {/* Tabs for Details, Bids, and Messages */}
+        {isAuthenticated && (canViewBids || canAccessChat) && (
+          <Card className="mb-8">
+            <div className="flex gap-2 border-b border-dark-700 pb-4 mb-4">
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'details'
+                    ? 'bg-accent-teal/20 text-accent-teal border border-accent-teal/50'
+                    : 'text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                Details
+              </button>
+              {canViewBids && (
+                <button
+                  onClick={() => setActiveTab('bids')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'bids'
+                      ? 'bg-accent-teal/20 text-accent-teal border border-accent-teal/50'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  Bids ({bids.length})
+                </button>
+              )}
+              {canAccessChat && (
+                <button
+                  onClick={() => setActiveTab('messages')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                    activeTab === 'messages'
+                      ? 'bg-accent-teal/20 text-accent-teal border border-accent-teal/50'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  <HiChat className="w-4 h-4" />
+                  Messages
+                </button>
+              )}
+            </div>
+
+            {/* Tab content */}
+            {activeTab === 'details' && (
+              <div>
+                <p className="text-gray-300 whitespace-pre-wrap">{currentGig.description}</p>
+              </div>
+            )}
+
+            {activeTab === 'bids' && canViewBids && (
+              <div>
+                {bidsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loading />
+                  </div>
+                ) : bids.length === 0 ? (
+                  <EmptyState message="No bids yet. Share this gig to get more applicants!" icon={HiInbox} />
+                ) : (
+                  <div className="space-y-4">
+                    {bids.map((bid) => (
+                      <Card key={bid._id} hover={false} className="!p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="font-semibold text-gray-100">{bid.freelancerId.name}</p>
+                            <p className="text-sm text-gray-400">{bid.freelancerId.email}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-accent-teal">${bid.price}</p>
+                            <span
+                              className={`px-2 py-1 rounded text-xs ${
+                                bid.status === 'hired'
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : bid.status === 'rejected'
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : 'bg-gray-500/20 text-gray-400'
+                              }`}
+                            >
+                              {bid.status.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-gray-300 mb-4 whitespace-pre-wrap">{bid.message}</p>
+
+                        {currentGig.status === 'open' && bid.status === 'pending' && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => handleHire(bid._id)}
+                          >
+                            Hire This Freelancer
+                          </Button>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'messages' && canAccessChat && (
+              <Chat gigId={id} gigStatus={currentGig.status} />
+            )}
+          </Card>
+        )}
+
 
         {/* Only show bids section if user is owner */}
         {canViewBids && showBids && (
