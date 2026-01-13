@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { HiXCircle, HiInbox, HiChat } from 'react-icons/hi';
 import { fetchGig, clearCurrentGig } from '../store/slices/gigSlice';
-import { fetchBidsByGig, createBid, hireFreelancer, clearBids, clearError } from '../store/slices/bidSlice';
+import { fetchBidsByGig, fetchMyBids, createBid, hireFreelancer, clearBids, clearError } from '../store/slices/bidSlice';
 import { clearMessages } from '../store/slices/messageSlice';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -20,7 +20,7 @@ const GigDetails = () => {
   const dispatch = useDispatch();
 
   const { currentGig, isLoading: gigLoading } = useSelector((state) => state.gigs);
-  const { bids, isLoading: bidsLoading, error: bidError } = useSelector((state) => state.bids);
+  const { bids, myBids, isLoading: bidsLoading, error: bidError } = useSelector((state) => state.bids);
   const { user, isAuthenticated, authLoading } = useSelector((state) => state.auth);
 
   const [showBidModal, setShowBidModal] = useState(false);
@@ -41,8 +41,18 @@ const GigDetails = () => {
   const canViewBids = isOwner;
 
   // Check if user is the hired freelancer
-  const hiredBid = bids.find((bid) => bid.status === 'hired');
-  const isHiredFreelancer = hiredBid && user && hiredBid.freelancerId._id === user._id;
+  // For owner: check in bids array (all bids for the gig)
+  // For freelancer: check in myBids array (their own bids)
+  const hiredBidFromGig = bids.find((bid) => bid.status === 'hired');
+  const hiredBidFromMyBids = myBids.find(
+    (bid) => bid.gigId?._id === id && bid.status === 'hired'
+  );
+  const hiredBid = hiredBidFromGig || hiredBidFromMyBids;
+  const isHiredFreelancer =
+    hiredBid &&
+    user &&
+    (hiredBid.freelancerId?._id === user._id ||
+      (hiredBidFromMyBids && hiredBidFromMyBids.freelancerId?._id === user._id));
 
   // Chat access: Only if gig is assigned AND (user is owner OR user is hired freelancer)
   const canAccessChat =
@@ -62,13 +72,19 @@ const GigDetails = () => {
     };
   }, [id, dispatch]);
 
-  // Fetch bids when owner wants to view them OR when checking for hired freelancer
-  // Fetch if user is owner (to view all bids) OR if gig is assigned (to check hired freelancer)
+  // Fetch bids when owner wants to view them
   useEffect(() => {
-    if ((canViewBids && showBids) || (currentGig?.status === 'assigned' && isAuthenticated)) {
+    if (canViewBids && showBids) {
       dispatch(fetchBidsByGig(id));
     }
-  }, [canViewBids, showBids, currentGig?.status, isAuthenticated, id, dispatch]);
+  }, [canViewBids, showBids, id, dispatch]);
+
+  // Fetch user's own bids when gig is assigned (to check if user is hired freelancer)
+  useEffect(() => {
+    if (currentGig?.status === 'assigned' && isAuthenticated && user?._id) {
+      dispatch(fetchMyBids());
+    }
+  }, [currentGig?.status, isAuthenticated, user?._id, dispatch]);
 
   const handleBidSubmit = async (e) => {
     e.preventDefault();
