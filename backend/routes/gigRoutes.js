@@ -4,6 +4,7 @@ import {
   getGig,
   createGig,
   getMyGigs,
+  deleteGig,
 } from '../controllers/gigController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -13,5 +14,6 @@ router.get('/', getGigs);
 router.get('/my-gigs', protect, getMyGigs);
 router.get('/:id', getGig);
 router.post('/', protect, createGig);
+router.delete('/:id', protect, deleteGig);
 
 export default router;

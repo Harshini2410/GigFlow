@@ -79,3 +79,28 @@ export const getMyGigs = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Delete gig
+// @route   DELETE /api/gigs/:id
+// @access  Private (Owner only)
+export const deleteGig = async (req, res, next) => {
+  try {
+    const gig = await Gig.findById(req.params.id);
+
+    if (!gig) {
+      return res.status(404).json({ message: 'Gig not found' });
+    }
+
+    // Check if user is the owner
+    if (gig.ownerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete this gig' });
+    }
+
+    // Delete the gig (MongoDB will handle related bids via cascade if configured)
+    await Gig.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Gig deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};

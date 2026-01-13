@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiInbox, HiBell } from 'react-icons/hi';
-import { fetchMyGigs } from '../store/slices/gigSlice';
+import { HiInbox, HiBell, HiTrash } from 'react-icons/hi';
+import { fetchMyGigs, deleteGig } from '../store/slices/gigSlice';
 import { fetchMyBids } from '../store/slices/bidSlice';
 import Card from '../components/Card';
 import Loading from '../components/Loading';
@@ -12,12 +12,13 @@ import Button from '../components/Button';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { myGigs, isLoading: gigsLoading } = useSelector((state) => state.gigs);
+  const { myGigs, isLoading: gigsLoading, error: gigsError } = useSelector((state) => state.gigs);
   const { myBids, isLoading: bidsLoading } = useSelector((state) => state.bids);
   const { notifications } = useSelector((state) => state.notifications);
   const { user } = useSelector((state) => state.auth); // Get current user
 
   const [activeTab, setActiveTab] = useState('gigs');
+  const [deletingGigId, setDeletingGigId] = useState(null);
 
   // Refetch data when user changes (important for account switching)
   useEffect(() => {
@@ -26,6 +27,20 @@ const Dashboard = () => {
       dispatch(fetchMyBids());
     }
   }, [dispatch, user?._id]); // Refetch when user ID changes
+
+  const handleDeleteGig = async (gigId, gigTitle) => {
+    if (window.confirm(`Are you sure you want to delete "${gigTitle}"? This action cannot be undone.`)) {
+      setDeletingGigId(gigId);
+      const result = await dispatch(deleteGig(gigId));
+      setDeletingGigId(null);
+      
+      if (deleteGig.fulfilled.match(result)) {
+        // Successfully deleted - myGigs will be updated automatically by Redux
+      } else {
+        alert(result.payload || 'Failed to delete gig');
+      }
+    }
+  };
 
   const tabs = [
     { id: 'gigs', label: 'My Gigs', count: myGigs.length },
@@ -94,6 +109,14 @@ const Dashboard = () => {
                       >
                         {gig.status.toUpperCase()}
                       </span>
+                      <button
+                        onClick={() => handleDeleteGig(gig._id, gig.title)}
+                        disabled={deletingGigId === gig._id}
+                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete gig"
+                      >
+                        <HiTrash className="w-5 h-5" />
+                      </button>
                     </div>
 
                     <h3 className="text-xl font-semibold text-gray-100 mb-2">{gig.title}</h3>
@@ -103,11 +126,13 @@ const Dashboard = () => {
                       <p className="text-2xl font-bold text-accent-teal">${gig.budget}</p>
                     </div>
 
-                    <Link to={`/gigs/${gig._id}`}>
-                      <Button variant="primary" className="w-full">
-                        View Details
-                      </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                      <Link to={`/gigs/${gig._id}`} className="flex-1">
+                        <Button variant="primary" className="w-full">
+                          View Details
+                        </Button>
+                      </Link>
+                    </div>
                   </Card>
                 </motion.div>
               ))}

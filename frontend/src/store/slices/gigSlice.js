@@ -50,6 +50,18 @@ export const fetchMyGigs = createAsyncThunk(
   }
 );
 
+export const deleteGig = createAsyncThunk(
+  'gigs/deleteGig',
+  async (gigId, { rejectWithValue }) => {
+    try {
+      await api.delete(`/gigs/${gigId}`);
+      return gigId; // Return gigId to remove from state
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete gig');
+    }
+  }
+);
+
 const gigSlice = createSlice({
   name: 'gigs',
   initialState: {
@@ -105,6 +117,26 @@ const gigSlice = createSlice({
       })
       .addCase(fetchMyGigs.fulfilled, (state, action) => {
         state.myGigs = action.payload;
+      })
+      // Delete gig
+      .addCase(deleteGig.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteGig.fulfilled, (state, action) => {
+        state.isLoading = false;
+        // Remove deleted gig from myGigs
+        state.myGigs = state.myGigs.filter(gig => gig._id !== action.payload);
+        // Also remove from public gigs list if present
+        state.gigs = state.gigs.filter(gig => gig._id !== action.payload);
+        // Clear currentGig if it was the deleted one
+        if (state.currentGig && state.currentGig._id === action.payload) {
+          state.currentGig = null;
+        }
+      })
+      .addCase(deleteGig.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       })
       // Clear user data when user logs out
       .addCase(logoutUser.fulfilled, (state) => {
