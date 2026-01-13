@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: gigflow-frontend
+    env: static
+    staticPublishPath: ./frontend/dist
+    headers:
+      - path: /*
+        name: X-Robots-Tag
+        value: noindex
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
