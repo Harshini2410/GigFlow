@@ -54,7 +54,7 @@ npm install
 Create a `.env` file in the `backend` directory:
 
 ```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://npoornimaharshini2003_db_user:Harshini2410@serverhive.azoygst.mongodb.net/gigflow?retryWrites=true&w=majority&appName=ServerHive
 JWT_SECRET=your_super_secret_jwt_key_here_minimum_32_characters_long
 PORT=5000
 FRONTEND_URL=http://localhost:5173
@@ -62,7 +62,6 @@ NODE_ENV=development
 ```
 
 **Important**: 
-- Replace `MONGODB_URI` with your MongoDB Atlas connection string
 - Generate a strong random string for `JWT_SECRET` (minimum 32 characters)
 
 ### 3. Frontend Setup
